@@ -13,9 +13,9 @@ init(Name, PanelId) ->
 acceptor(Name, Promised, Voted, Value, PanelId) ->
   receive
     {prepare, Proposer, Round} ->
-      case order:gr(..., ...) of
+      case order:gr(Round, Promised) of
         true ->
-          ... ! {promise, ..., ..., ...},               
+          ... ! {promise, Round, Voted, Value},               
       io:format("[Acceptor ~w] Phase 1: promised ~w voted ~w colour ~w~n",
                  [Name, ..., ..., Value]),
           % Update gui
