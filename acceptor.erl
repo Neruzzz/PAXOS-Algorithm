@@ -15,17 +15,17 @@ acceptor(Name, Promised, Voted, Value, PanelId) ->
     {prepare, Proposer, Round} ->
       case order:gr(Round, Promised) of
         true ->
-          ... ! {promise, Round, Voted, Value},               
+          Proposer ! {promise, Round, Voted, Value},               
       io:format("[Acceptor ~w] Phase 1: promised ~w voted ~w colour ~w~n",
-                 [Name, ..., ..., Value]),
+                 [Name, Round, Voted, Value]),
           % Update gui
           Colour = case Value of na -> {0,0,0}; _ -> Value end,
           PanelId ! {updateAcc, "Voted: " ++ io_lib:format("~p", [Voted]), 
-                     "Promised: " ++ io_lib:format("~p", [...]), Colour},
-          acceptor(Name, ..., Voted, Value, PanelId);
+                     "Promised: " ++ io_lib:format("~p", [Round]), Colour},
+          acceptor(Name, Round, Voted, Value, PanelId);
         false ->
-          ... ! {sorry, {prepare, ...}},
-          acceptor(Name, ..., Voted, Value, PanelId)
+          Proposer ! {sorry, {prepare, Round}},
+          acceptor(Name, Promised, Voted, Value, PanelId)
       end;
     {accept, Proposer, Round, Proposal} ->
       case order:goe(..., ...) of
@@ -36,14 +36,14 @@ acceptor(Name, Promised, Voted, Value, PanelId) ->
       io:format("[Acceptor ~w] Phase 2: promised ~w voted ~w colour ~w~n",
                  [Name, Promised, ..., ...]),
               % Update gui
-              PanelId ! {updateAcc, "Voted: " ++ io_lib:format("~p", [...]), 
+              PanelId ! {updateAcc, "Voted: " ++ io_lib:format("~p", [Round]), 
                          "Promised: " ++ io_lib:format("~p", [Promised]), ...},
               acceptor(Name, Promised, ..., ..., PanelId);
             false ->
-              acceptor(Name, Promised, ..., ..., PanelId)
+              acceptor(Name, Promised, Voted, Value, PanelId)
           end;                            
         false ->
-          ... ! {sorry, {accept, ...}},
+          Proposer ! {sorry, {accept, Round}},
           acceptor(Name, Promised, Voted, Value, PanelId)
       end;
     stop ->
