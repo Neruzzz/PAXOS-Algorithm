@@ -29,8 +29,8 @@ round(Name, Backoff, Round, Proposal, Acceptors, PanelId) ->
       {Value, Round};
     abort ->
       timer:sleep(rand:uniform(Backoff)),
-      Next = order:inc(...),
-      round(Name, (2*Backoff), ..., Proposal, Acceptors, PanelId)
+      Next = order:inc(Round),
+      round(Name, (2*Backoff), Next, Proposal, Acceptors, PanelId)
   end.
 
 ballot(Name, Round, Proposal, Acceptors, PanelId) ->
