@@ -24,7 +24,7 @@ round(Name, Backoff, Round, Proposal, Acceptors, PanelId) ->
              [Name, Round, Proposal]),
   % Update gui
   PanelId ! {updateProp, "Round: " ++ io_lib:format("~p", [Round]), Proposal},
-  case ballot(Name, ..., ..., ..., PanelId) of
+  case ballot(Name, Round, Proposal, Acceptors, PanelId) of %not sure
     {ok, Value} ->
       {Value, Round};
     abort ->
@@ -34,8 +34,8 @@ round(Name, Backoff, Round, Proposal, Acceptors, PanelId) ->
   end.
 
 ballot(Name, Round, Proposal, Acceptors, PanelId) ->
-  prepare(..., ...),
-  Quorum = (length(...) div 2) + 1,
+  prepare(Proposal, Round),
+  Quorum = (length(Acceptors) div 2) + 1,
   MaxVoted = order:null(),
   case collect(..., ..., ..., ...) of
     {accepted, Value} ->
