@@ -27,7 +27,7 @@ acceptor(Name, Promised, Voted, Value, PanelId) ->
           Proposer ! {sorry, {prepare, Round}},
           acceptor(Name, Promised, Voted, Value, PanelId)
       end;
-    {accept, Proposer, Round, Proposal} -> %round ballot value, proposal the value within the ballot
+    {accept, Proposer, Round, Proposal} -> %Round: ballot value, Proposal: the value within the ballot
       case order:goe(Round, Promised) of
         true ->
           Proposer ! {vote, Round},
