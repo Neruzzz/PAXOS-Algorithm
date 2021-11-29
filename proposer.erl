@@ -24,7 +24,7 @@ round(Name, Backoff, Round, Proposal, Acceptors, PanelId) ->
              [Name, Round, Proposal]),
   % Update gui
   PanelId ! {updateProp, "Round: " ++ io_lib:format("~p", [Round]), Proposal},
-  case ballot(Name, Round, Proposal, Acceptors, PanelId) of %not sure
+  case ballot(Name, Round, Proposal, Acceptors, PanelId) of
     {ok, Value} ->
       {Value, Round};
     abort ->
