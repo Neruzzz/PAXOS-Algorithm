@@ -18,7 +18,7 @@ acceptor(Name, Promised, Voted, Value, PanelId) ->
         true ->
 		  P=rand:uniform(10),
 		  if P =< ?drop ->
-			io:format("message dropped~");
+			io:format("message dropped~n");%he quitado el churrito
 			true->
 				Proposer ! {promise, Round, Voted, Value}
 				%Proposer ! {promise, Round, Voted, Value},   
@@ -39,7 +39,7 @@ acceptor(Name, Promised, Voted, Value, PanelId) ->
         true ->
 		  P=rand:uniform(10),
 		  if P =< ?drop ->
-			io:format("message dropped~");
+			io:format("message dropped~n");
 			true->
 				Proposer ! {vote, Round}
 				%Proposer ! {vote, Round},							

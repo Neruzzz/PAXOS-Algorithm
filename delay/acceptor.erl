@@ -17,7 +17,7 @@ acceptor(Name, Promised, Voted, Value, PanelId) ->
       case order:gr(Round, Promised) of
         true ->
 		  T=rand:uniform(?delay),
-		  timer:send_after(T, Proposer, {promise, Round, Voted, Value})
+		  timer:send_after(T, Proposer, {promise, Round, Voted, Value}),
           %Proposer ! {promise, Round, Voted, Value},               
       io:format("[Acceptor ~w] Phase 1: promised ~w voted ~w colour ~w~n",
                  [Name, Round, Voted, Value]),
