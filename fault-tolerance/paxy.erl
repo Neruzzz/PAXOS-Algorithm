@@ -1,5 +1,5 @@
 -module(paxy).
--export([start/1, stop/0, stop/1]).
+-export([start/1, stop/0, stop/1, crash/1]).
 
 -define(RED, {255,0,0}).
 -define(BLUE, {0,0,255}).
