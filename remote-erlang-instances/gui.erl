@@ -1,5 +1,6 @@
 -module(gui).
--export([start/2]).
+-export([start_acceptors/2]).
+-export([start_proposers/2]).
 -include_lib("wx/include/wx.hrl").
 
 -define(WindowSize, {450, 420}).
@@ -13,36 +14,71 @@
 -define(AccTitle, "Acceptors").
 -define(AccText1, "Voted: {}").
 -define(AccText2, "Promised: {}").
-
-start(Acceptors, Proposers) ->
-  % computing panel heights (plus the spacer value)
-  AccPanelHeight = length(Acceptors)*?InSizerMinHeight + 10, 
-  PropPanelHeight = length(Proposers)*?InSizerMinHeight + 10,
-  State = make_window(Acceptors, Proposers, AccPanelHeight, PropPanelHeight),
-  gui(State).
  
-make_window(Acceptors, Proposers, AccPanelHeight, PropPanelHeight) ->
+start_acceptors(Acceptors, AccPanelHeight) ->
+  State = make_window_acceptors(Acceptors, AccPanelHeight),
+  gui_acceptors(State).
+
+start_proposers(Proposers, PropPanelHeight) ->
+  State = make_window_proposers(Proposers, PropPanelHeight),
+  gui_proposers(State).
+  
+make_window_acceptors(Acceptors, AccPanelHeight) ->
   Server = wx:new(),
   Env = wx:get_env(),
   Frame = wxFrame:new(Server, -1, "Paxos Algorithm", [{size,?WindowSize}]),
   wxFrame:connect(Frame, close_window),
-  Panel  = wxPanel:new(Frame),
+  Panel = wxPanel:new(Frame),
 
   % create Sizers
   OuterSizer = wxBoxSizer:new(?wxVERTICAL),
   MainSizer = wxBoxSizer:new(?wxHORIZONTAL),
-  ProposerSizer = wxStaticBoxSizer:new(?wxVERTICAL, Panel, 
-                                       [{label, "Proposers"}]), 
-  AcceptorSizer = wxStaticBoxSizer:new(?wxVERTICAL, Panel, 
-                                       [{label, "Acceptors"}]),
+  AcceptorSizer = wxStaticBoxSizer:new(?wxVERTICAL, Panel,
+    [{label, "Acceptors"}]),
 
-  % set Sizer's min width/height
+  % set Sizer’s min width/height
   case AccPanelHeight > ?OuterSizerMaxHeight of
     true ->
       OuterAccSizerHeight = ?OuterSizerMaxHeight;
     false ->
       OuterAccSizerHeight = AccPanelHeight
   end,
+
+  wxSizer:setMinSize(AcceptorSizer, ?OuterSizerMinWidth, OuterAccSizerHeight),
+
+  % create Acceptors and Proposers Panels
+  AccIds = create_acceptors(Acceptors, Panel, AcceptorSizer, Env),
+
+  % add spacers
+  wxSizer:addSpacer(MainSizer, 5), %spacer
+  wxSizer:addSpacer(AcceptorSizer, 10),
+
+  % add AcceptorSizer into MainSizer
+  wxSizer:add(MainSizer, AcceptorSizer,[]),
+  wxSizer:addSpacer(MainSizer, 10),
+  wxSizer:addSpacer(OuterSizer, 10),
+
+  % add MainSizer into OuterSizer
+  wxSizer:add(OuterSizer, MainSizer, []),
+
+  %% Now ’set’ OuterSizer into the Panel
+  wxPanel:setSizer(Panel, OuterSizer),
+
+  wxFrame:show(Frame),
+  {Frame, AccIds}.
+
+make_window_proposers(Proposers, PropPanelHeight) ->
+  Server = wx:new(),
+  Env = wx:get_env(),
+  Frame = wxFrame:new(Server, -1, "Paxos Algorithm", [{size,?WindowSize}]),
+  wxFrame:connect(Frame, close_window),
+  Panel = wxPanel:new(Frame),
+
+  % create Sizers
+  OuterSizer = wxBoxSizer:new(?wxVERTICAL),
+  MainSizer = wxBoxSizer:new(?wxHORIZONTAL),
+  ProposerSizer = wxStaticBoxSizer:new(?wxVERTICAL, Panel,
+    [{label, "Proposers"}]),
 
   case PropPanelHeight > ?OuterSizerMaxHeight of
     true ->
@@ -51,58 +87,76 @@ make_window(Acceptors, Proposers, AccPanelHeight, PropPanelHeight) ->
       OuterPropSizerHeight = PropPanelHeight
   end,
 
-  wxSizer:setMinSize(AcceptorSizer, ?OuterSizerMinWidth, OuterAccSizerHeight),
   wxSizer:setMinSize(ProposerSizer, ?OuterSizerMinWidth, OuterPropSizerHeight),
+
+  % create Acceptors and Proposers Panels
+  PropIds = create_proposers(Proposers, Panel, ProposerSizer, Env),
+
   % add spacers
-  wxSizer:addSpacer(MainSizer, 10),  %spacer
-  wxSizer:addSpacer(ProposerSizer, 5),  
-  wxSizer:addSpacer(AcceptorSizer, 5),  
+  wxSizer:addSpacer(MainSizer, 5), %spacer
+  wxSizer:addSpacer(ProposerSizer, 10),
 
   % add ProposerSizer into MainSizer
   wxSizer:add(MainSizer, ProposerSizer,[]),
-  wxSizer:addSpacer(MainSizer, 20),
-
-  % add AcceptorSizer into MainSizer
-  wxSizer:add(MainSizer, AcceptorSizer,[]),
-  wxSizer:addSpacer(MainSizer, 20),
-  wxSizer:addSpacer(OuterSizer, 10),
+  wxSizer:addSpacer(MainSizer, 10),
 
   % add MainSizer into OuterSizer
   wxSizer:add(OuterSizer, MainSizer, []),
- 
-  %% Now 'set' OuterSizer into the Panel
+
+  %% Now ’set’ OuterSizer into the Panel
   wxPanel:setSizer(Panel, OuterSizer),
 
-  % create Acceptors and Proposers Panels
-  AccIds = create_acceptors(Acceptors, Panel, AcceptorSizer, Env),
-  PropIds = create_proposers(Proposers, Panel, ProposerSizer, Env),
-
   wxFrame:show(Frame),
-  {Frame, AccIds, PropIds}.
+  {Frame, PropIds}.
 
-gui(State) ->
-  {Frame, AccIds, PropIds} = State,
+gui_acceptors(State) ->
+  {Frame, AccIds} = State,
   receive
-    % request State
-    {reqState, From} ->
-      io:format("[Gui] state requested ~n"),
-      From ! {reqState, {AccIds, PropIds}},
-      gui(State);
-    % a connection gets the close_window signal
-    % and sends this message to the server
+  % request State
+    {reqStateAccep, From} ->
+      io:format("[Gui Acceptors] State requested ~n"),
+      From ! {reqStateAccep, {AccIds}},
+      gui_acceptors(State);
+
+  % a connection gets the close_window signal
+  % and sends this message to the server
     #wx{event=#wxClose{}} ->
-      %optional, goes to shell
-      io:format("[Gui] ~p closing window ~n", [self()]),
+      io:format("~p Closing window ~n",[self()]), %optional, goes to shell
       % now we use the reference to Frame
       wxWindow:destroy(Frame),
-      ok;  % we exit the loop
+      ok; % we exit the loop
     stop ->
       wxWindow:destroy(Frame),
-      ok;  % we exit the loop
+      ok; % we exit the loop
     Msg ->
       %Everything else ends up here
-      io:format("[Gui] unknown message: ~p ~n", [Msg]),
-      gui(State)
+      io:format("loop default triggered: Got ~n ~p ~n", [Msg]),
+      gui_acceptors(State)
+  end.
+  
+gui_proposers(State) ->
+	{Frame, PropIds} = State,
+  receive
+  % request State
+    {reqStateProp, From} ->
+      io:format("[Gui Proposers] State requested~n", []),
+      From ! {reqStateProp, {PropIds}},
+      gui_proposers(State);
+
+  % a connection gets the close_window signal
+  % and sends this message to the server
+    #wx{event=#wxClose{}} ->
+      io:format("~p Closing window ~n",[self()]), %optional, goes to shell
+      % now we use the reference to Frame
+      wxWindow:destroy(Frame),
+      ok; % we exit the loop
+    stop ->
+      wxWindow:destroy(Frame),
+      ok; % we exit the loop
+    Msg ->
+      %Everything else ends up here
+      io:format("loop default triggered: Got ~n ~p ~n", [Msg]),
+      gui_proposers(State)
   end.
 
 % create acceptors
