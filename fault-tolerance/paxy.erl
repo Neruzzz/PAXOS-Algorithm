@@ -72,6 +72,11 @@ stop(Name) ->
     undefined ->
       ok;
     Pid ->
+      case Name == gui of
+        false->
+          pers:delete(Name)
+        end,
+      
       Pid ! stop
   end.
 
