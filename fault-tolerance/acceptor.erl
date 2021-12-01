@@ -76,6 +76,7 @@ acceptor(Name, Promised, Voted, Value, PanelId) ->
 			  storeAcceptor(Name, Promised, Round, Proposal, PanelId),
               acceptor(Name, Promised, Round, Proposal, PanelId);
             false ->
+			  storeAcceptor(Name, Promised, Voted, Value, PanelId),
               acceptor(Name, Promised, Voted, Value, PanelId)
           end;                            
         false ->
@@ -83,8 +84,8 @@ acceptor(Name, Promised, Voted, Value, PanelId) ->
           acceptor(Name, Promised, Voted, Value, PanelId)
       end;
     stop ->
-	  %storeAcceptor(Name, Promised, Voted, Value, PanelId),
-	  pers:delete(Name),
+	  storeAcceptor(Name, Promised, Voted, Value, PanelId),
+	  %pers:delete(Name),
       PanelId ! stop,
       ok
   end.
