@@ -22,11 +22,13 @@ start(Sleep) ->
       spawn(fun() -> 
         Begin = erlang:monotonic_time(),
         start_proposers(PropIds, PropInfo, AccRegister, Sleep, self()),
-		    crash(a),
+		timer:sleep(2000),
+		crash(a),
         wait_proposers(length(PropIds)),
         End = erlang:monotonic_time(),
         Elapsed = erlang:convert_time_unit(End-Begin, native, millisecond),
-        io:format("[Paxy] Total elapsed time: ~w ms~n", [Elapsed])
+        io:format("[Paxy] Total elapsed time: ~w ms~n", [Elapsed]),
+		stop()
       end)
   end.
     
@@ -84,7 +86,7 @@ crash(Name) ->
   case whereis(Name) of
     undefined ->
       ok;
-    Pid ->
+    Pid ->timer:sleep(1000),
       pers:open(Name),
 	  {_, _, _, Pn} = pers:read(Name),
 	  Pn ! {updateAcc, "Voted: CRASHED", "Promised: CRASHED", {0,0,0}},
