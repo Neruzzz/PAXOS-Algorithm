@@ -14,17 +14,31 @@ init(Name, PanelId) ->
   Promised = order:null(), 
   Voted = order:null(),
   Value = na,
-  {Pr, Vot, Val, Pn} = pers:read(Name),
-  case Pn == na of
-	true -> acceptor(Name, Pr, Vot, Val, PanelId),
-			storeAcceptor(Name, Pr, Vot, Val, PanelId);
-	false -> acceptor(Name, Pr, Vot, Val, Pn)
+  case PanelId == na of
+    true-> {Pr, Vot, Val, Pn} = pers:read(Name),
+	       pers:close(Name)
+		   case Pn == na of
+			true-> 
+				ok;
+			false -> %recovering
+				case Val == na of
+					true ->Pn ! {updateAcc, "Voted: " ++ io_lib:format("~p", [Vot]), 
+                            "Promised: " ++ io_lib:format("~p", [Pr]), {0,0,0}};
+					false-> Pn ! {updateAcc, "Voted: " ++ io_lib:format("~p", [Vot]), 
+                            "Promised: " ++ io_lib:format("~p", [Pr]), Val}
+                end,
+			acceptor(Name, Pr, Vot, Val, Pn)
+        end
+	false-> pers:store(Name, Promised, Voted, Value, PanelId),
+	       pers:close(Name),
+		   acceptor(Name, Promised, Voted, Value, PanelId);
   end.
   
-%  case PanelId == na of
-%    true->
-%  pers:store(Name, Promised, Voted, Value, PanelId),
-%  acceptor(Name, Promised, Voted, Value, PanelId).
+  %case Pn == na of
+  %true -> acceptor(Name, Pr, Vot, Val, PanelId),
+  %		storeAcceptor(Name, Pr, Vot, Val, PanelId);
+  %false -> acceptor(Name, Pr, Vot, Val, Pn)
+  %end.
   
 
 
