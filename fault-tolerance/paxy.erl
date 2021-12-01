@@ -22,7 +22,7 @@ start(Sleep) ->
       spawn(fun() -> 
         Begin = erlang:monotonic_time(),
         start_proposers(PropIds, PropInfo, AccRegister, Sleep, self()),
-		crash(a),
+		    crash(a),
         wait_proposers(length(PropIds)),
         End = erlang:monotonic_time(),
         Elapsed = erlang:convert_time_unit(End-Begin, native, millisecond),
@@ -88,5 +88,5 @@ crash(Name) ->
 	  exit(Pid, "crash"),
 	  
 	  timer:sleep(3000),
-	  register(Name, acceptor:start(Name, na)),
+	  register(Name, acceptor:start(Name, na))
   end.

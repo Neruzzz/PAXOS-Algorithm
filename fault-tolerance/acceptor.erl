@@ -15,8 +15,12 @@ init(Name, PanelId) ->
   Voted = order:null(),
   Value = na,
   case PanelId == na of
+    false-> 
+         pers:store(Name, Promised, Voted, Value, PanelId),
+	       pers:close(Name),
+		     acceptor(Name, Promised, Voted, Value, PanelId);
     true-> {Pr, Vot, Val, Pn} = pers:read(Name),
-	       pers:close(Name)
+	       pers:close(Name),
 		   case Pn == na of
 			true-> 
 				ok;
@@ -26,12 +30,9 @@ init(Name, PanelId) ->
                             "Promised: " ++ io_lib:format("~p", [Pr]), {0,0,0}};
 					false-> Pn ! {updateAcc, "Voted: " ++ io_lib:format("~p", [Vot]), 
                             "Promised: " ++ io_lib:format("~p", [Pr]), Val}
-                end,
-			acceptor(Name, Pr, Vot, Val, Pn)
+        end,
+			  acceptor(Name, Pr, Vot, Val, Pn)
         end
-	false-> pers:store(Name, Promised, Voted, Value, PanelId),
-	       pers:close(Name),
-		   acceptor(Name, Promised, Voted, Value, PanelId);
   end.
   
   %case Pn == na of
@@ -72,7 +73,7 @@ acceptor(Name, Promised, Voted, Value, PanelId) ->
               % Update gui
               PanelId ! {updateAcc, "Voted: " ++ io_lib:format("~p", [Round]), 
                          "Promised: " ++ io_lib:format("~p", [Promised]), Proposal},
-			  storeAcceptor(Name, Promised, Round, Proposal, PanelId);
+			  storeAcceptor(Name, Promised, Round, Proposal, PanelId),
               acceptor(Name, Promised, Round, Proposal, PanelId);
             false ->
               acceptor(Name, Promised, Voted, Value, PanelId)
